@@ -60,8 +60,8 @@ function buildOption(matrix: MatrixData): EChartsOption {
   return {
     tooltip: {
       position: 'top',
-      formatter: (params: { data: [number, number, number] }) => {
-        const [xIndex, yIndex, value] = params.data
+      formatter: (params: any) => {
+        const [xIndex, yIndex, value] = (params?.data as [number, number, number] | undefined) ?? [0, 0, 0]
         return `${yLabels[yIndex]} / ${xLabels[xIndex]}<br/>${props.tooltipFormatter(value)}`
       }
     },
@@ -115,7 +115,10 @@ function buildOption(matrix: MatrixData): EChartsOption {
         label: {
           show: true,
           color: '#162033',
-          formatter: (params: { data: [number, number, number] }) => props.labelFormatter(params.data[2])
+          formatter: (params: any) => {
+            const [, , value] = (params?.data as [number, number, number] | undefined) ?? [0, 0, 0]
+            return props.labelFormatter(value)
+          }
         },
         emphasis: {
           itemStyle: {

@@ -4,9 +4,9 @@ import { defineStore } from 'pinia'
 export const useAppStore = defineStore('app', () => {
   const drawerOpen = ref(false)
   const drawerTitle = ref('详情')
-  const drawerContent = ref<Record<string, unknown> | null>(null)
+  const drawerContent = ref<unknown | null>(null)
 
-  function openDrawer(title: string, payload: Record<string, unknown>) {
+  function openDrawer(title: string, payload: unknown) {
     drawerTitle.value = title
     drawerContent.value = payload
     drawerOpen.value = true
