@@ -1,0 +1,1151 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寻找资金运作痕迹</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* 全局样式 */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* 容器样式 */
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 标题样式 */
+        h1 {
+            color: #2d3748;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* 表单样式 */
+        .form-label {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 14px 24px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4290 100%);
+        }
+        
+        /* 自动补全样式 */
+        .autocomplete {
+            position: relative;
+        }
+        
+        .autocomplete-items {
+            position: absolute;
+            border: 2px solid #e2e8f0;
+            border-radius: 0 0 10px 10px;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .autocomplete-items div {
+            padding: 12px 16px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #f1f1f1;
+            transition: background-color 0.2s ease;
+        }
+        
+        .autocomplete-items div:last-child {
+            border-radius: 0 0 10px 10px;
+            border-bottom: none;
+        }
+        
+        .autocomplete-items div:hover {
+            background-color: #f7fafc;
+            color: #667eea;
+        }
+        
+        .autocomplete-active {
+            background-color: #edf2f7 !important;
+            color: #667eea !important;
+        }
+        
+        /* 加载状态样式 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .spinner-border {
+            width: 4rem;
+            height: 4rem;
+            border-width: 0.3em;
+        }
+        
+        /* 结果区域样式 */
+        .result-section {
+            margin-top: 40px;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-title {
+            color: #2d3748;
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        
+        /* 股票卡片样式 */
+        .related-stock {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .related-stock:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: #667eea;
+        }
+        
+        .stock-name {
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stock-code {
+            background-color: #edf2f7;
+            color: #667eea;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .stock-info {
+            color: #718096;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .count-badge {
+            background-color: #667eea;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .concept-badge {
+            background-color: #48bb78;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .concept-badge:hover {
+            background-color: #38a169;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+        }
+        
+        /* 模态框样式优化 */
+        .modal-xl {
+            max-width: 900px;
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+        
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        /* 概念统计信息卡片样式 */
+        #concept-graph-stats {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #667eea;
+        }
+        
+        /* 平滑滚动 */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb {
+            background: #c5c5c5;
+            border-radius: 10px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+        
+        .stock-dates {
+            font-size: 13px;
+            color: #a0aec0;
+            word-break: break-all;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        /* 错误提示样式 */
+        .error {
+            color: #e53e3e;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                margin: 20px auto;
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .result-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* 空结果样式 */
+        .empty-result {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+        
+        .empty-result i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>风起于青萍之末</h1>
+        
+        <form id="search-form">
+            <div class="mb-4">
+                <label for="stock-input" class="form-label">股票名称</label>
+                <div class="autocomplete">
+                    <input type="text" id="stock-input" class="form-control" placeholder="请输入股票名称（如：合百集团）" required>
+                </div>
+                <div id="stock-error" class="error"></div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="topk-select" class="form-label">相关股票数量</label>
+                <select id="topk-select" class="form-select">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="match-300">
+                    <label class="form-check-label" for="match-300">仅匹配30开头的股票代码</label>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">查询关联股票</button>
+            </div>
+        </form>
+        
+        <div class="loading">
+            <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="mt-3 text-muted">正在分析股票关联关系...</p>
+        </div>
+        
+        <div class="result-section" id="result-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="result-title" id="result-title"></h3>
+                <button type="button" id="correlation-btn" class="btn btn-primary" style="display: none;">
+                    <i class="bi bi-bar-chart-line"></i> 股票相关性分析
+                </button>
+            </div>
+            <div id="result-list"></div>
+        </div>
+        
+        <!-- 股票相关性分析模态框 -->
+        <div class="modal fade" id="correlationModal" tabindex="-1" aria-labelledby="correlationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="correlationModalLabel">股票相关性分析</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="correlation-loading" class="loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-3 text-muted">正在分析股票相关性...</p>
+                        </div>
+                        
+                        <div id="correlation-result" style="display: none;">
+                            <h6>相关性分析结果</h6>
+                            <div class="mb-4">
+                                <p class="text-muted">分析时间: <span id="analysis-time"></span></p>
+                                <p class="text-muted">股票数量: <span id="stock-count"></span></p>
+                                <p class="text-muted">数据周期: <span id="data-period"></span></p>
+                            </div>
+                            
+                            <!-- 相关性热力图 -->
+                            <div class="mb-5">
+                                <h6 class="mb-3">相关性热力图</h6>
+                                <div id="correlation-heatmap"></div>
+                            </div>
+                            
+                            <!-- 显著性热力图 -->
+                            <div class="mb-5">
+                                <h6 class="mb-3">显著性热力图 (p值)</h6>
+                                <div id="significance-heatmap"></div>
+                            </div>
+                            
+                            <!-- 相关性表格 -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">相关性系数表</h6>
+                                <div class="overflow-auto">
+                                    <table id="correlation-table" class="table table-sm table-bordered" style="font-size: 14px;"></table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="close-correlation-modal" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 概念相关股票模态框 -->
+    <div class="modal fade" id="conceptModal" tabindex="-1" aria-labelledby="conceptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="conceptModalLabel">概念相关股票</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label for="topk-concept" class="form-label">显示股票数量</label>
+                        <select id="topk-concept" class="form-select">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    
+                    <div id="concept-loading" class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-3 text-muted">正在获取概念相关股票...</p>
+                    </div>
+                    
+                    <div id="concept-graph-stats" class="mb-4 p-3 bg-light rounded d-none">
+                        <h6>知识图谱统计信息</h6>
+                        <p><span class="fw-bold">节点数:</span> <span id="node-count">0</span> | <span class="fw-bold">边数:</span> <span id="edge-count">0</span></p>
+                    </div>
+                    
+                    <div id="concept-result-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="close-modal-btn" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 自动补全功能
+        function autocomplete(input, getSuggestions) {
+            let currentFocus;
+            
+            input.addEventListener("input", function(e) {
+                let val = this.value;
+                closeAllLists();
+                currentFocus = -1;
+                
+                if (!val) return false;
+                
+                let autocompleteList = document.createElement("DIV");
+                autocompleteList.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(autocompleteList);
+                
+                // 获取建议列表
+                fetch(`/api/search_stocks?query=${encodeURIComponent(val)}`)
+                    .then(response => response.json())
+                    .then(suggestions => {
+                        suggestions.forEach(function(item) {
+                            let itemDiv = document.createElement("DIV");
+                            itemDiv.innerHTML = `<strong>${item.substr(0, val.length)}</strong>${item.substr(val.length)}`;
+                            itemDiv.innerHTML += `<input type="hidden" value="${item}">`;
+                            itemDiv.addEventListener("click", function(e) {
+                                input.value = this.getElementsByTagName("input")[0].value;
+                                closeAllLists();
+                            });
+                            autocompleteList.appendChild(itemDiv);
+                        });
+                    });
+            });
+            
+            input.addEventListener("keydown", function(e) {
+                let autocompleteList = document.getElementsByClassName("autocomplete-items")[0];
+                if (autocompleteList) {
+                    let items = autocompleteList.getElementsByTagName("div");
+                    if (e.keyCode === 40) { // 下箭头
+                        currentFocus++;
+                        addActive(items);
+                    } else if (e.keyCode === 38) { // 上箭头
+                        currentFocus--;
+                        addActive(items);
+                    } else if (e.keyCode === 13) { // 回车键
+                        e.preventDefault();
+                        if (currentFocus > -1) {
+                            if (items) items[currentFocus].click();
+                        }
+                    }
+                }
+            });
+            
+            function addActive(items) {
+                if (!items) return false;
+                removeActive(items);
+                if (currentFocus >= items.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (items.length - 1);
+                items[currentFocus].classList.add("autocomplete-active");
+            }
+            
+            function removeActive(items) {
+                for (let i = 0; i < items.length; i++) {
+                    items[i].classList.remove("autocomplete-active");
+                }
+            }
+            
+            function closeAllLists(elmnt) {
+                let items = document.getElementsByClassName("autocomplete-items");
+                for (let i = 0; i < items.length; i++) {
+                    if (elmnt != items[i] && elmnt != input) {
+                        items[i].parentNode.removeChild(items[i]);
+                    }
+                }
+            }
+            
+            document.addEventListener("click", function(e) {
+                closeAllLists(e.target);
+            });
+        }
+        
+        // 初始化自动补全
+        const stockInput = document.getElementById('stock-input');
+        autocomplete(stockInput);
+        
+        // 表单提交处理
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const stock = stockInput.value.trim();
+            const topk = document.getElementById('topk-select').value;
+            const loadingDiv = document.querySelector('.loading');
+            const resultSection = document.getElementById('result-section');
+            const resultTitle = document.getElementById('result-title');
+            const resultList = document.getElementById('result-list');
+            const stockError = document.getElementById('stock-error');
+            
+            // 重置状态
+            stockError.textContent = '';
+            resultSection.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            // 验证输入
+            if (!stock) {
+                stockError.textContent = '请输入股票名称';
+                loadingDiv.style.display = 'none';
+                return;
+            }
+            
+            // 获取过滤条件
+            const match300 = document.getElementById('match-300').checked;
+            
+            // 发送请求
+            fetch(`/api/related_stocks?stock=${encodeURIComponent(stock)}&topk=${topk}&match_300=${match300}`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';
+                    
+                    if (data.success) {
+                        // 显示结果
+                        resultTitle.textContent = `与"${data.target_stock}"关联性最高的${topk}只股票`;
+                        
+                        if (data.results.length > 0) {
+                            resultList.innerHTML = '';
+                            // 添加动画效果的结果渲染
+                            resultList.classList.add('animate-fade-in');
+                            data.results.forEach((item, index) => {
+                                const stockDiv = document.createElement('div');
+                                stockDiv.className = 'related-stock';
+                                stockDiv.style.opacity = '0';
+                                stockDiv.style.transform = 'translateY(20px)';
+                                stockDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                                stockDiv.style.transitionDelay = `${index * 50}ms`;
+                                
+                                // 概念标签处理
+                                const conceptsHtml = item.concepts && item.concepts.length > 0 
+                                    ? item.concepts.map(concept => `<span class="concept-badge" onclick="handleConceptClick('${concept}')">${concept}</span>`).join('')
+                                    : '暂无信息';
+                                
+                                stockDiv.innerHTML = `
+                                    <div class="stock-name">
+                                        <span>${index + 1}.</span>
+                                        <span>${item.stock_name}</span>
+                                        <span class="stock-code">${item.stock_code}</span>
+                                    </div>
+                                    <div class="stock-info">
+                                        <span>共现次数:</span>
+                                        <span class="count-badge">${item.count}</span>
+                                    </div>
+                                    <div class="stock-info">
+                                        <span class="me-2">概念:</span>
+                                        <div class="concepts">${conceptsHtml}</div>
+                                    </div>
+                                    <div class="stock-dates">共现日期: ${item.dates.join(', ')}</div>
+                                `;
+                                resultList.appendChild(stockDiv);
+                                
+                                // 强制重排并触发动画
+                                setTimeout(() => {
+                                    stockDiv.style.opacity = '1';
+                                    stockDiv.style.transform = 'translateY(0)';
+                                }, 10);
+                            });
+                            
+                            // 为动态加载的概念标签添加点击事件（备用）
+                            document.querySelectorAll('.concept-badge').forEach(badge => {
+                                badge.addEventListener('click', function() {
+                                    handleConceptClick(this.textContent);
+                                });
+                            });
+                        } else {
+                            resultList.innerHTML = `
+                                <div class="empty-result">
+                                    <i class="bi bi-search"></i>
+                                    <h4>未找到相关股票数据</h4>
+                                    <p>请尝试其他股票名称</p>
+                                </div>
+                            `;
+                        }
+                        
+                        resultSection.style.display = 'block';
+                    } else {
+                        // 显示错误
+                        stockError.textContent = data.error;
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    stockError.textContent = '查询失败，请重试';
+                    console.error('Error:', error);
+                });
+        });
+        
+        // 全局变量存储模态框实例
+        let currentModalInstance = null;
+        let currentModalType = null;
+        
+        // 股票代码点击处理函数
+        function handleStockCodeClick(stockName) {
+            // 关闭当前模态框
+            if (currentModalInstance) {
+                currentModalInstance.hide();
+                currentModalInstance = null;
+                currentModalType = null;
+            }
+            
+            // 将股票名称填入搜索框
+            const stockInput = document.getElementById('stock-input');
+            if (stockInput) {
+                stockInput.value = stockName;
+                
+                // 触发搜索功能 - 模拟表单提交
+                const searchForm = document.getElementById('search-form');
+                if (searchForm) {
+                    searchForm.dispatchEvent(new Event('submit'));
+                }
+            }
+        }
+        
+        // 概念标签点击处理函数
+        function handleConceptClick(concept) {
+            // 如果有其他模态框打开，先关闭
+            if (currentModalInstance && currentModalType !== 'concept') {
+                currentModalInstance.hide();
+                currentModalInstance = null;
+            }
+            
+            // 更新模态框标题
+            document.getElementById('conceptModalLabel').textContent = `"${concept}"概念相关股票`;
+            
+            // 只创建一次模态框实例
+            if (!currentModalInstance || currentModalType !== 'concept') {
+                currentModalInstance = new bootstrap.Modal(document.getElementById('conceptModal'), {
+                    focus: false,  // 防止Bootstrap自动管理焦点
+                    backdrop: true,  // 启用背景
+                    keyboard: true  // 允许ESC键关闭
+                });
+                currentModalType = 'concept';
+            }
+            
+            // 显示模态框
+            currentModalInstance.show();
+            
+            // 获取并显示概念相关股票
+            fetchConceptStocks(concept);
+        }
+        
+        // 获取概念相关股票函数
+        function fetchConceptStocks(concept) {
+            const topk = document.getElementById('topk-concept').value;
+            const loadingDiv = document.getElementById('concept-loading');
+            const resultList = document.getElementById('concept-result-list');
+            const graphStatsDiv = document.getElementById('concept-graph-stats');
+            
+            // 重置状态
+            resultList.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            graphStatsDiv.classList.add('d-none');
+            
+            // 发送请求
+            fetch(`/api/concept_stocks?concept=${encodeURIComponent(concept)}&topk=${topk}&min_weight=1`)  // 添加 min_weight 参数，避免过多关联
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';
+                    
+                    if (data.success) {
+                        // 显示图谱统计信息
+                        if (data.graph_stats) {
+                            document.getElementById('node-count').textContent = data.graph_stats.nodes;
+                            document.getElementById('edge-count').textContent = data.graph_stats.edges;
+                            graphStatsDiv.classList.remove('d-none');
+                        }
+                        
+                        // 显示结果
+                        if (data.results && data.results.length > 0) {
+                            data.results.forEach((item, index) => {
+                                const stockDiv = document.createElement('div');
+                                stockDiv.className = 'related-stock';
+                                
+                                // 格式化中心性得分
+                                const centrality = (item.centrality * 100).toFixed(2);
+                                
+                                // 相关股票展示（最多显示5个）
+                                const relatedStocks = item.related_stocks && item.related_stocks.length > 0
+                                    ? item.related_stocks.slice(0, 5).join(', ')
+                                    : '无';
+                                
+                                // 概念标签处理
+                                const conceptsHtml = item.concepts && item.concepts.length > 0
+                                    ? item.concepts.map(c => `<span class="concept-badge" onclick="handleConceptClick('${c}')">${c}</span>`).join('')
+                                    : '暂无信息';
+                                
+                                stockDiv.innerHTML = `
+                                    <div class="stock-name">
+                                        <span>${index + 1}.</span>
+                                        <span>${item.stock_name}</span>
+                                        <span class="stock-code" onclick="handleStockCodeClick('${item.stock_name}')" style="cursor: pointer; transition: background-color 0.2s; padding: 2px 6px; border-radius: 3px;" onmouseover="this.style.backgroundColor='#adb5bd'" onmouseout="this.style.backgroundColor=''">${item.stock_code}</span>
+                                        <span class="count-badge" style="background-color: #e53e3e;">中心性: ${centrality}%</span>
+                                    </div>
+                                    <div class="stock-info">
+                                        <span class="me-2">概念:</span>
+                                        <div class="concepts">${conceptsHtml}</div>
+                                    </div>
+                                    <div class="stock-info">
+                                        <span class="me-2">相关股票:</span>
+                                        <span>${relatedStocks}</span>
+                                    </div>
+                                `;
+                                resultList.appendChild(stockDiv);
+                                
+                                // 强制重排并触发动画
+                                setTimeout(() => {
+                                    stockDiv.style.opacity = '1';
+                                    stockDiv.style.transform = 'translateY(0)';
+                                }, 10);
+                            });
+                        } else {
+                            resultList.innerHTML = `
+                                <div class="empty-result">
+                                    <i class="bi bi-search"></i>
+                                    <h4>未找到相关股票数据</h4>
+                                    <p>该概念暂无相关股票</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // 显示错误
+                        resultList.innerHTML = `
+                            <div class="empty-result">
+                                <i class="bi bi-exclamation-circle"></i>
+                                <h4>查询失败</h4>
+                                <p>${data.error || '请稍后重试'}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    resultList.innerHTML = `
+                        <div class="empty-result">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <h4>网络错误</h4>
+                            <p>查询失败，请重试</p>
+                        </div>
+                    `;
+                    console.error('Error fetching concept stocks:', error);
+                });
+        }
+        
+        // 为topk选择框添加变化事件
+        document.getElementById('topk-concept').addEventListener('change', function() {
+            const currentConcept = document.getElementById('conceptModalLabel').textContent.replace(/"(.+)"概念相关股票/, '$1');
+            if (currentConcept && currentConcept !== '概念相关股票') {
+                fetchConceptStocks(currentConcept);
+            }
+        });
+        
+        // 概念模态框和相关性分析模态框共享一个隐藏事件处理函数
+        function handleModalHidden(event) {
+            // 移除所有的modal-backdrop元素
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            
+            // 移除body上的modal-open类
+            document.body.classList.remove('modal-open');
+            
+            // 清除body的paddingRight样式
+            document.body.style.paddingRight = '';
+            
+            // 重置当前模态框实例
+            if (currentModalInstance && 
+                (event.target.id === 'conceptModal' || event.target.id === 'correlationModal')) {
+                currentModalInstance = null;
+                currentModalType = null;
+            }
+            
+            // 恢复焦点到搜索框
+            const stockInput = document.getElementById('stock-input');
+            if (stockInput) {
+                stockInput.focus();
+            }
+        }
+        
+        // 概念模态框 - 隐藏事件
+        document.getElementById('conceptModal').addEventListener('hidden.bs.modal', handleModalHidden);
+        
+        // 相关性分析模态框 - 隐藏事件
+        document.getElementById('correlationModal').addEventListener('hidden.bs.modal', handleModalHidden);
+        
+        // 修复点击模态框外部关闭的问题
+        document.getElementById('conceptModal').addEventListener('click', function(e) {
+            if (e.target === this && currentModalInstance && currentModalType === 'concept') {
+                currentModalInstance.hide();
+            }
+        });
+        
+        // 修复点击相关性模态框外部关闭的问题
+        document.getElementById('correlationModal').addEventListener('click', function(e) {
+            if (e.target === this && currentModalInstance && currentModalType === 'correlation') {
+                currentModalInstance.hide();
+            }
+        });
+        
+        // 全局变量存储当前股票列表
+        let currentStockList = [];
+        
+        // 股票相关性分析按钮点击处理函数
+        function handleCorrelationAnalysis() {
+            if (currentStockList.length === 0) {
+                alert('请先查询股票关联关系');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('correlation-loading').style.display = 'block';
+            document.getElementById('correlation-result').style.display = 'none';
+            
+            // 如果有其他模态框打开，先关闭
+            if (currentModalInstance && currentModalType !== 'correlation') {
+                currentModalInstance.hide();
+                currentModalInstance = null;
+            }
+            
+            // 创建或获取相关性分析模态框实例
+            if (!currentModalInstance || currentModalType !== 'correlation') {
+                currentModalInstance = new bootstrap.Modal(document.getElementById('correlationModal'), {
+                    focus: false,  // 防止Bootstrap自动管理焦点
+                    backdrop: true,  // 启用背景
+                    keyboard: true  // 允许ESC键关闭
+                });
+                currentModalType = 'correlation';
+            }
+            
+            // 显示模态框
+            currentModalInstance.show();
+            
+            // 提取股票列表，直接传递对象数组
+            const stockList = currentStockList;
+            
+            // 调用API进行相关性分析
+            performCorrelationAnalysis(stockList);
+        }
+        
+        // 执行相关性分析函数
+        function performCorrelationAnalysis(stockList) {
+            // 准备请求参数
+            const today = new Date().toISOString().split('T')[0];
+            const data = {
+                stocks: stockList,
+                start_date: `${today} 09:30:00`,
+                end_date: `${today} 15:00:00`,
+                period: "5",
+                include_heatmaps: true
+            };
+            
+            // 发送请求
+            fetch('/api/multi_stock_correlation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('correlation-loading').style.display = 'none';
+                
+                if (result.success) {
+                    // 显示结果
+                    document.getElementById('correlation-result').style.display = 'block';
+                    
+                    // 更新分析信息
+                    document.getElementById('analysis-time').textContent = new Date().toLocaleString();
+                    document.getElementById('stock-count').textContent = Object.keys(result.correlation_results.kendall.matrix).length;
+                    document.getElementById('data-period').textContent = '5分钟';
+                    
+                    // 显示热力图
+                    const heatmapBase64 = result.correlation_results.kendall.heatmap_base64;
+                    if (heatmapBase64 && heatmapBase64 !== null) {
+                        document.getElementById('correlation-heatmap').innerHTML = `<img src="data:image/png;base64,${heatmapBase64}" class="img-fluid" alt="Kendall相关性热力图">`;
+                    } else {
+                        document.getElementById('correlation-heatmap').innerHTML = '<p>热力图生成失败或未提供</p>';
+                    }
+                    
+                    // 生成相关性表格（将对象形式的矩阵转换为二维数组）
+                    const correlationResults = result.correlation_results;
+                    
+                    // 默认使用Kendall相关系数
+                    const selectedCorrelation = correlationResults.kendall;
+                    const matrix = selectedCorrelation.matrix;
+                    
+                    // 从矩阵中提取股票列表（保持顺序）
+                    const stocks = Object.keys(matrix);
+                    
+                    // 转换为二维数组
+                    const matrixArray = [];
+                    stocks.forEach(stock1 => {
+                        const row = [];
+                        stocks.forEach(stock2 => {
+                            row.push(matrix[stock1][stock2]);
+                        });
+                        matrixArray.push(row);
+                    });
+                    
+                    // 生成股票信息列表
+                    const stockInfoList = stocks.map(stock_name => ({
+                        stock_code: stock_name, // 由于API返回的是股票名称作为键，这里暂时使用股票名称作为stock_code
+                        stock_name: stock_name
+                    }));
+                    
+                    generateCorrelationTable(matrixArray, stockInfoList);
+                } else {
+                    // 显示错误
+                    document.getElementById('correlation-result').innerHTML = `
+                        <div class="empty-result">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <h4>分析失败</h4>
+                            <p>${result.error || '请稍后重试'}</p>
+                        </div>
+                    `;
+                    document.getElementById('correlation-result').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('correlation-loading').style.display = 'none';
+                document.getElementById('correlation-result').innerHTML = `
+                    <div class="empty-result">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <h4>网络错误</h4>
+                        <p>查询失败，请重试</p>
+                    </div>
+                `;
+                document.getElementById('correlation-result').style.display = 'block';
+                console.error('Error performing correlation analysis:', error);
+            });
+        }
+        
+        // 生成相关性表格
+        function generateCorrelationTable(matrix, stocks) {
+            const table = document.getElementById('correlation-table');
+            table.innerHTML = '';
+            
+            // 创建表头
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            // 空单元格
+            const emptyCell = document.createElement('th');
+            headerRow.appendChild(emptyCell);
+            
+            // 股票名称列
+            stocks.forEach(stock => {
+                const th = document.createElement('th');
+                th.textContent = stock.stock_name;
+                th.style.whiteSpace = 'nowrap';
+                th.style.minWidth = '100px';
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // 创建表格内容
+            const tbody = document.createElement('tbody');
+            
+            stocks.forEach((rowStock, rowIndex) => {
+                const row = document.createElement('tr');
+                
+                // 行标题
+                const rowHeader = document.createElement('td');
+                rowHeader.textContent = rowStock.stock_name;
+                rowHeader.style.fontWeight = 'bold';
+                rowHeader.style.whiteSpace = 'nowrap';
+                row.appendChild(rowHeader);
+                
+                // 行数据
+                stocks.forEach((colStock, colIndex) => {
+                    const cell = document.createElement('td');
+                    const value = matrix[rowIndex][colIndex];
+                    
+                    // 设置单元格样式
+                    cell.textContent = value.toFixed(4);
+                    cell.style.textAlign = 'center';
+                    cell.style.padding = '4px 8px';
+                    
+                    // 根据相关性值设置背景颜色
+                    const intensity = Math.abs(value);
+                    if (value > 0) {
+                        // 正相关 - 红色系
+                        cell.style.backgroundColor = `rgba(239, 68, 68, ${intensity * 0.5})`;
+                    } else if (value < 0) {
+                        // 负相关 - 蓝色系
+                        cell.style.backgroundColor = `rgba(59, 130, 246, ${intensity * 0.5})`;
+                    } else {
+                        // 无相关
+                        cell.style.backgroundColor = '#f3f4f6';
+                    }
+                    
+                    row.appendChild(cell);
+                });
+                
+                tbody.appendChild(row);
+            });
+            
+            table.appendChild(tbody);
+        }
+        
+        // 为相关性分析按钮添加事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            const correlationBtn = document.getElementById('correlation-btn');
+            if (correlationBtn) {
+                correlationBtn.addEventListener('click', handleCorrelationAnalysis);
+            }
+        });
+        
+        // 在显示股票关联结果时更新当前股票列表
+        document.addEventListener('submit', function(e) {
+            if (e.target.id === 'search-form') {
+                // 清空当前股票列表
+                currentStockList = [];
+                // 隐藏相关性分析按钮
+                document.getElementById('correlation-btn').style.display = 'none';
+            }
+        });
+        
+        // 在搜索结果显示后更新当前股票列表
+        const originalThen = window.Promise.prototype.then;
+        window.Promise.prototype.then = function(onFulfilled, onRejected) {
+            return originalThen.call(this, function(result) {
+                // 检查是否是股票关联查询结果
+                if (result && result.success && result.results && Array.isArray(result.results)) {
+                    // 更新当前股票列表
+                    currentStockList = result.results.map(item => ({
+                        stock_code: item.stock_code,
+                        stock_name: item.stock_name
+                    }));
+                    
+                    // 添加目标股票到列表
+                    if (result.target_stock && result.results.length > 0) {
+                        // 从结果中获取目标股票信息
+                        const targetStock = result.results[0];
+                        currentStockList.unshift({
+                            stock_code: targetStock.stock_code,
+                            stock_name: result.target_stock
+                        });
+                    }
+                    
+                    // 显示相关性分析按钮
+                    if (currentStockList.length > 1) {
+                        document.getElementById('correlation-btn').style.display = 'block';
+                    }
+                }
+                
+                if (onFulfilled) {
+                    return onFulfilled(result);
+                } else {
+                    return result;
+                }
+            }, onRejected);
+        };
+    </script>
+</body>
+</html>

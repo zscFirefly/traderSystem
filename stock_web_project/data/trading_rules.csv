@@ -1,0 +1,2 @@
+﻿id,rule_title,rule_type,rule_content,priority,strong_reminder,status,created_by,created_at,updated_by,updated_at,is_deleted
+b0d54497674c4ef2b674c71fc1fe1992,没放量不开仓,开仓,大盘放量了吗？？,high,1,active,admin,2026-03-29 09:38:08,admin,2026-03-29 09:38:08,0

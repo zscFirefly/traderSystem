@@ -1,0 +1,5 @@
+﻿id,event_time,event_title,potential_risk,stock_name,stock_code,concept_name,severity,status,notes,created_by,created_at,updated_by,updated_at,is_deleted
+33c417de1e074f0eb2c4add4d58944ec,2026-04-09 00:26:00,日本加息,日本加息引发日元套息交易的崩盘，从而影响市场的剧烈波动,,,,high,tracking,重要,admin,2026-03-28 00:27:27,admin,2026-03-29 08:40:17,0
+022d0fc688e7417c89dd7b2f0003c4b0,2026-04-30 20:59:00,香港家族企业老钱的再配置,增量资金,,,,low,pending,这部分资金 本来是想去投资中东地产，但是中东最近的局势，使得去中东资金更加谨慎，会转向港股 or A股，国内的资金有在对接。,admin,2026-03-28 21:04:06,admin,2026-03-29 08:40:28,0
+9b0feece274d46d4a354dbef6ac45e36,2026-03-29 10:30:00,测试事件,测试风险,,,,medium,pending,,admin,2026-03-29 08:42:03,admin,2026-03-29 08:45:23,1
+9d0735669141484c962e73439e1d53cd,2026-04-30 08:41:00,美股技术性熊市,全球资本市场受影响,,,,high,tracking,,admin,2026-03-29 08:44:20,admin,2026-03-29 08:44:20,0
