@@ -2,27 +2,27 @@ import http from '@/services/http'
 import type { CreateDisciplineLessonPayload, CreateDisciplineRulePayload } from '@/types/discipline'
 
 export function getDisciplineRules(limit?: number) {
-  return http.get('/api/discipline/rules', {
+  return http.get('/discipline/rules', {
     params: limit ? { limit } : undefined
   })
 }
 
 export function createDisciplineRule(payload: CreateDisciplineRulePayload) {
-  return http.post('/api/discipline/rules', payload)
+  return http.post('/discipline/rules', payload)
 }
 
 export function updateDisciplineRule(ruleId: string, payload: CreateDisciplineRulePayload) {
-  return http.put(`/api/discipline/rules/${ruleId}`, payload)
+  return http.put(`/discipline/rules/${ruleId}`, payload)
 }
 
 export function deleteDisciplineRule(ruleId: string, operator?: string) {
-  return http.delete(`/api/discipline/rules/${ruleId}`, {
+  return http.delete(`/discipline/rules/${ruleId}`, {
     data: operator ? { updated_by: operator } : undefined
   })
 }
 
 export function getDisciplineLessons(limit?: number, dashboardOnly = false) {
-  return http.get('/api/discipline/lessons', {
+  return http.get('/discipline/lessons', {
     params: {
       ...(limit ? { limit } : {}),
       dashboard_only: dashboardOnly
@@ -31,15 +31,15 @@ export function getDisciplineLessons(limit?: number, dashboardOnly = false) {
 }
 
 export function createDisciplineLesson(payload: CreateDisciplineLessonPayload) {
-  return http.post('/api/discipline/lessons', payload)
+  return http.post('/discipline/lessons', payload)
 }
 
 export function updateDisciplineLesson(lessonId: string, payload: CreateDisciplineLessonPayload) {
-  return http.put(`/api/discipline/lessons/${lessonId}`, payload)
+  return http.put(`/discipline/lessons/${lessonId}`, payload)
 }
 
 export function deleteDisciplineLesson(lessonId: string, operator?: string) {
-  return http.delete(`/api/discipline/lessons/${lessonId}`, {
+  return http.delete(`/discipline/lessons/${lessonId}`, {
     data: operator ? { updated_by: operator } : undefined
   })
 }

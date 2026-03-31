@@ -373,6 +373,13 @@ def discipline_lesson_detail(lesson_id):
 @web_bp.route("/api/multi_stock_correlation", methods=["POST"])
 def multi_stock_correlation():
     baostock_client = BaoStockClient()
+    request_summary = {
+        "stocks": [],
+        "start_date": None,
+        "end_date": None,
+        "trading_days": None,
+        "period": None,
+    }
     try:
         payload = request.get_json()
         if not payload:
@@ -386,6 +393,14 @@ def multi_stock_correlation():
         include_heatmap = payload.get(
             "include_heatmap",
             payload.get("include_heatmaps", False),
+        )
+        request_summary.update(
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+                "trading_days": trading_days,
+                "period": period,
+            }
         )
 
         if not stocks:
@@ -404,13 +419,29 @@ def multi_stock_correlation():
                         "error": "股票参数格式错误，需要包含 stock_code/stock_name",
                     }
                 ), 400
+        request_summary["stocks"] = valid_stocks
+        current_app.logger.info(
+            "multi_stock_correlation request stocks=%s trading_days=%s period=%s start_date=%s end_date=%s include_heatmap=%s",
+            valid_stocks,
+            trading_days,
+            period,
+            start_date,
+            end_date,
+            include_heatmap,
+        )
 
         stock_datas = []
         stock_names = []
         valid_stocks_list = []
+        failed_stocks = []
         baostock_client.login()
         if not start_date or not end_date:
             start_date, end_date = baostock_client.get_recent_trading_window(trading_days)
+            current_app.logger.info(
+                "multi_stock_correlation resolved trading window start=%s end=%s",
+                start_date,
+                end_date,
+            )
         for symbol, name in valid_stocks:
             stock_data = get_stock_data(
                 symbol,
@@ -420,17 +451,65 @@ def multi_stock_correlation():
                 client=baostock_client,
             )
             if stock_data is None:
+                failed_stocks.append({"symbol": symbol, "name": name, "reason": "没有返回分钟数据"})
+                current_app.logger.warning(
+                    "multi_stock_correlation stock data missing symbol=%s name=%s start=%s end=%s period=%s",
+                    symbol,
+                    name,
+                    start_date,
+                    end_date,
+                    period,
+                )
                 continue
             stock_datas.append(stock_data)
             stock_names.append(name)
             valid_stocks_list.append((symbol, name))
+            current_app.logger.info(
+                "multi_stock_correlation stock data loaded symbol=%s name=%s rows=%s",
+                symbol,
+                name,
+                len(stock_data),
+            )
 
         if not valid_stocks_list:
-            return jsonify({"success": False, "error": "没有成功获取任何股票数据"}), 400
+            current_app.logger.warning(
+                "multi_stock_correlation no stock data available failed_stocks=%s",
+                failed_stocks,
+            )
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "没有成功获取任何股票数据",
+                    "failed_stocks": failed_stocks,
+                    "time_range": {"start_date": start_date, "end_date": end_date},
+                }
+            ), 400
 
         returns_matrix = create_returns_matrix(stock_datas, stock_names)
         if returns_matrix is None:
-            return jsonify({"success": False, "error": "无法创建收益率矩阵"}), 400
+            current_app.logger.warning(
+                "multi_stock_correlation failed to build returns matrix valid_stocks=%s failed_stocks=%s",
+                valid_stocks_list,
+                failed_stocks,
+            )
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "无法创建收益率矩阵",
+                    "valid_stocks": [
+                        {"symbol": symbol, "name": name} for symbol, name in valid_stocks_list
+                    ],
+                    "failed_stocks": failed_stocks,
+                    "time_range": {"start_date": start_date, "end_date": end_date},
+                }
+            ), 400
+        current_app.logger.info(
+            "multi_stock_correlation returns matrix created rows=%s columns=%s valid_stocks=%s failed_stocks=%s",
+            len(returns_matrix),
+            list(returns_matrix.columns),
+            valid_stocks_list,
+            failed_stocks,
+        )
 
         correlation_results = {}
         for method in ["pearson", "spearman", "kendall"]:
@@ -476,9 +555,18 @@ def multi_stock_correlation():
                 "returns_count": len(returns_matrix),
                 "correlation_results": correlation_results,
                 "significance_result": significance_result,
+                "failed_stocks": failed_stocks,
             }
         )
     except Exception as exc:
+        current_app.logger.exception(
+            "multi_stock_correlation failed stocks=%s start_date=%s end_date=%s trading_days=%s period=%s",
+            request_summary["stocks"],
+            request_summary["start_date"],
+            request_summary["end_date"],
+            request_summary["trading_days"],
+            request_summary["period"],
+        )
         return jsonify({"success": False, "error": str(exc)}), 400
     finally:
         baostock_client.logout()
