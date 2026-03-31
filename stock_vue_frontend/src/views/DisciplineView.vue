@@ -155,12 +155,7 @@
           </div>
           <div v-if="disciplineStore.loadingRules" class="empty-hint">正在加载纪律清单...</div>
           <div v-else-if="disciplineStore.hasRules" class="list-stack">
-            <article
-              v-for="item in disciplineStore.rules"
-              :key="item.id"
-              class="rule-card"
-              @click="openRuleDetail(item)"
-            >
+            <article v-for="item in disciplineStore.rules" :key="item.id" class="rule-card">
               <div class="rule-header">
                 <div>
                   <h5 class="rule-title">{{ item.rule_title }}</h5>
@@ -186,12 +181,7 @@
           </div>
           <div v-if="disciplineStore.loadingLessons" class="empty-hint">正在加载血泪教训...</div>
           <div v-else-if="disciplineStore.hasLessons" class="list-stack">
-            <article
-              v-for="item in disciplineStore.lessons"
-              :key="item.id"
-              class="lesson-card"
-              @click="openLessonDetail(item)"
-            >
+            <article v-for="item in disciplineStore.lessons" :key="item.id" class="lesson-card">
               <div class="rule-header">
                 <div>
                   <h5 class="rule-title">{{ item.mistake_action }}</h5>
@@ -218,11 +208,9 @@
 import { onMounted } from 'vue'
 
 import PageSection from '@/components/common/PageSection.vue'
-import { useAppStore } from '@/stores/app'
 import { useDisciplineStore } from '@/stores/discipline'
 import type { DisciplineLessonItem, DisciplineRuleItem } from '@/types/discipline'
 
-const appStore = useAppStore()
 const disciplineStore = useDisciplineStore()
 
 onMounted(async () => {
@@ -262,14 +250,6 @@ async function deleteLesson(item: DisciplineLessonItem) {
   }
 
   await disciplineStore.removeLesson(item)
-}
-
-function openRuleDetail(item: DisciplineRuleItem) {
-  appStore.openDrawer(`${item.rule_title} 详情`, item as unknown as Record<string, unknown>)
-}
-
-function openLessonDetail(item: DisciplineLessonItem) {
-  appStore.openDrawer('血泪教训详情', item as unknown as Record<string, unknown>)
 }
 
 function priorityLabel(value: string) {
@@ -386,14 +366,6 @@ function priorityLabel(value: string) {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
-  cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
-}
-
-.rule-card:hover,
-.lesson-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
 }
 
 .rule-title,

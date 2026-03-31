@@ -69,17 +69,12 @@
       <div class="card-block">
         <div class="result-header">
           <h4 class="panel-title">关联股票结果</h4>
-          <span class="result-note">点击任意结果可在右侧详情抽屉查看明细</span>
+          <span class="result-note">展示共现次数、概念标签和最近共现日期。</span>
         </div>
 
         <div v-if="stockStore.loadingRelated" class="empty-hint">正在加载关联股票结果...</div>
         <div v-else-if="stockStore.hasResults" class="result-list">
-          <article
-            v-for="(item, index) in stockStore.relatedStocks"
-            :key="`${item.stock_code}-${item.stock_name}`"
-            class="result-card"
-            @click="openDetail(item)"
-          >
+          <article v-for="(item, index) in stockStore.relatedStocks" :key="`${item.stock_code}-${item.stock_name}`" class="result-card">
             <div class="result-card-main">
               <div>
                 <p class="result-rank">#{{ index + 1 }}</p>
@@ -117,13 +112,10 @@ import { computed, watch } from 'vue'
 
 import CorrelationPanel from '@/components/business/correlation/CorrelationPanel.vue'
 import PageSection from '@/components/common/PageSection.vue'
-import { useAppStore } from '@/stores/app'
 import { useCorrelationStore } from '@/stores/correlation'
 import { useStockStore } from '@/stores/stock'
 import type { CorrelationStockInput } from '@/types/correlation'
-import type { RelatedStockItem } from '@/types/stock'
 
-const appStore = useAppStore()
 const stockStore = useStockStore()
 const correlationStore = useCorrelationStore()
 
@@ -171,15 +163,6 @@ function handleSelectSuggestion(stockName: string) {
 async function submitSearch() {
   correlationStore.reset()
   await stockStore.fetchRelatedStocks(stockStore.query)
-}
-
-function openDetail(item: RelatedStockItem) {
-  appStore.openDrawer(`${item.stock_name} 详情`, {
-    code: item.stock_code,
-    count: item.count,
-    concepts: item.concepts,
-    dates: item.dates
-  })
 }
 
 watch(
@@ -371,17 +354,10 @@ watch(
   border: 1px solid var(--border);
   border-radius: 18px;
   background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
-  cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
   display: grid;
   grid-template-columns: minmax(220px, 0.8fr) minmax(180px, 0.8fr) minmax(280px, 1.4fr) minmax(240px, 1fr);
   gap: 18px;
   align-items: start;
-}
-
-.result-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
 }
 
 .result-rank,

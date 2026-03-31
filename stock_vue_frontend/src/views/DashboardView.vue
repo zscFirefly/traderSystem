@@ -3,12 +3,7 @@
     <PageSection title="交易纪律" description="开仓、加仓、止损和禁做规则放在首页，开盘前先过一遍。">
       <div v-if="disciplineStore.loadingRules" class="dashboard-empty">正在加载交易纪律...</div>
       <div v-else-if="disciplineStore.dashboardRules.length" class="dashboard-card-list">
-        <article
-          v-for="item in disciplineStore.dashboardRules"
-          :key="item.id"
-          class="dashboard-card"
-          @click="openRuleDetail(item)"
-        >
+        <article v-for="item in disciplineStore.dashboardRules" :key="item.id" class="dashboard-card">
           <div class="dashboard-card-header">
             <div>
               <p class="dashboard-subtle">{{ item.rule_type }}</p>
@@ -32,12 +27,7 @@
     <PageSection title="血泪教训" description="把最容易重复犯的错误放在首页，时刻提醒自己不要再犯。">
       <div v-if="disciplineStore.loadingLessons" class="dashboard-empty">正在加载血泪教训...</div>
       <div v-else-if="disciplineStore.dashboardLessons.length" class="dashboard-card-list">
-        <article
-          v-for="item in disciplineStore.dashboardLessons"
-          :key="item.id"
-          class="dashboard-card"
-          @click="openLessonDetail(item)"
-        >
+        <article v-for="item in disciplineStore.dashboardLessons" :key="item.id" class="dashboard-card">
           <div class="dashboard-card-header">
             <div>
               <p class="dashboard-subtle">{{ item.lesson_time }}</p>
@@ -58,12 +48,7 @@
     <PageSection title="事件提醒" description="保留最近需要关注的事件提醒，方便和交易纪律一起交叉检查。">
       <div v-if="alertsStore.loading" class="dashboard-empty">正在加载事件提醒...</div>
       <div v-else-if="alertsStore.hasPreviewItems" class="dashboard-card-list">
-        <article
-          v-for="item in alertsStore.previewItems"
-          :key="item.id"
-          class="dashboard-card"
-          @click="openAlertDetail(item)"
-        >
+        <article v-for="item in alertsStore.previewItems" :key="item.id" class="dashboard-card">
           <div class="dashboard-card-header">
             <div>
               <p class="dashboard-subtle">{{ item.event_time }}</p>
@@ -88,13 +73,9 @@
 import { onMounted } from 'vue'
 
 import PageSection from '@/components/common/PageSection.vue'
-import { useAppStore } from '@/stores/app'
 import { useAlertsStore } from '@/stores/alerts'
 import { useDisciplineStore } from '@/stores/discipline'
-import type { AlertItem } from '@/types/alert'
-import type { DisciplineLessonItem, DisciplineRuleItem } from '@/types/discipline'
 
-const appStore = useAppStore()
 const alertsStore = useAlertsStore()
 const disciplineStore = useDisciplineStore()
 
@@ -105,18 +86,6 @@ onMounted(async () => {
   await disciplineStore.fetchLessons(5, 'dashboard')
   await alertsStore.fetchAlerts(5, 'preview')
 })
-
-function openRuleDetail(item: DisciplineRuleItem) {
-  appStore.openDrawer(`${item.rule_title} 详情`, item)
-}
-
-function openLessonDetail(item: DisciplineLessonItem) {
-  appStore.openDrawer(`血泪教训详情`, item)
-}
-
-function openAlertDetail(item: AlertItem) {
-  appStore.openDrawer(`${item.event_title} 详情`, item)
-}
 
 function priorityLabel(value: string) {
   if (value === 'high') return '高优先级'
@@ -164,13 +133,6 @@ function alertStatusLabel(value: string) {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
-  cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
 }
 
 .dashboard-card-header,

@@ -67,17 +67,12 @@
       <div class="card-block">
         <div class="result-header">
           <h4 class="panel-title">概念股票列表</h4>
-          <span class="result-note">点击任意结果可在右侧详情抽屉查看概念、中心性和关联股票。</span>
+          <span class="result-note">展示股票中心性、概念标签和关联股票数量。</span>
         </div>
 
         <div v-if="conceptStore.loading" class="empty-hint">正在加载概念股票结果...</div>
         <div v-else-if="conceptStore.hasResults" class="result-list">
-          <article
-            v-for="(item, index) in conceptStore.results"
-            :key="`${item.stock_code}-${item.stock_name}`"
-            class="result-card"
-            @click="openDetail(item)"
-          >
+          <article v-for="(item, index) in conceptStore.results" :key="`${item.stock_code}-${item.stock_name}`" class="result-card">
             <div class="result-card-main">
               <div>
                 <p class="result-rank">#{{ index + 1 }}</p>
@@ -115,11 +110,8 @@ import { computed } from 'vue'
 
 import MetricCard from '@/components/common/MetricCard.vue'
 import PageSection from '@/components/common/PageSection.vue'
-import { useAppStore } from '@/stores/app'
 import { useConceptStore } from '@/stores/concept'
-import type { ConceptStockItem } from '@/types/concept'
 
-const appStore = useAppStore()
 const conceptStore = useConceptStore()
 
 const graphValue = computed(() => {
@@ -132,15 +124,6 @@ const graphValue = computed(() => {
 
 async function submitSearch() {
   await conceptStore.fetchConceptStocks(conceptStore.query)
-}
-
-function openDetail(item: ConceptStockItem) {
-  appStore.openDrawer(`${item.stock_name} 详情`, {
-    code: item.stock_code,
-    centrality: item.centrality,
-    concepts: item.concepts,
-    related_stocks: item.related_stocks
-  })
 }
 </script>
 
@@ -275,17 +258,10 @@ function openDetail(item: ConceptStockItem) {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
-  cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
   display: grid;
   grid-template-columns: minmax(220px, 0.8fr) minmax(180px, 0.8fr) minmax(280px, 1.4fr) minmax(240px, 1fr);
   gap: 18px;
   align-items: start;
-}
-
-.result-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
 }
 
 .result-rank,

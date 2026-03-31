@@ -107,12 +107,7 @@
 
         <div v-if="alertsStore.loading" class="empty-hint">正在加载提醒列表...</div>
         <div v-else-if="alertsStore.hasItems" class="alert-list">
-          <article
-            v-for="item in alertsStore.items"
-            :key="item.id"
-            class="alert-card"
-            @click="openDetail(item)"
-          >
+          <article v-for="item in alertsStore.items" :key="item.id" class="alert-card">
             <div class="alert-main">
               <div>
                 <p class="alert-time">{{ item.event_time }}</p>
@@ -147,11 +142,9 @@ import { onMounted } from 'vue'
 
 import MetricCard from '@/components/common/MetricCard.vue'
 import PageSection from '@/components/common/PageSection.vue'
-import { useAppStore } from '@/stores/app'
 import { useAlertsStore } from '@/stores/alerts'
 import type { AlertItem } from '@/types/alert'
 
-const appStore = useAppStore()
 const alertsStore = useAlertsStore()
 
 onMounted(async () => {
@@ -173,10 +166,6 @@ async function deleteAlert(item: AlertItem) {
   }
 
   await alertsStore.removeAlert(item)
-}
-
-function openDetail(item: AlertItem) {
-  appStore.openDrawer(`${item.event_title} 详情`, item)
 }
 
 function severityLabel(value: string) {
@@ -299,13 +288,6 @@ function statusLabel(value: string) {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
-  cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
-}
-
-.alert-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
 }
 
 .alert-main {
