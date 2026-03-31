@@ -24,10 +24,32 @@
       <label class="field-label" for="correlation-stock-pool">股票池</label>
       <textarea
         id="correlation-stock-pool"
-        v-model="manualStockText"
+        v-model="stockTextModel"
         class="field-textarea"
         placeholder="每行一只，格式：601127:赛力斯"
       />
+      <div class="parameter-grid">
+        <div class="field-row">
+          <label class="field-label" for="correlation-trading-days">交易日数</label>
+          <input
+            id="correlation-trading-days"
+            v-model.number="correlationStore.tradingDays"
+            class="field-input"
+            type="number"
+            min="1"
+            max="120"
+          />
+        </div>
+        <div class="field-row">
+          <label class="field-label" for="correlation-period">分钟周期</label>
+          <select id="correlation-period" v-model="correlationStore.period" class="field-input">
+            <option value="5">5 分钟</option>
+            <option value="15">15 分钟</option>
+            <option value="30">30 分钟</option>
+            <option value="60">60 分钟</option>
+          </select>
+        </div>
+      </div>
       <p class="panel-note">支持 `代码:名称` 或 `代码,名称`，至少填写两只股票。</p>
       <p v-if="parseError" class="error-text">{{ parseError }}</p>
     </div>
@@ -43,6 +65,7 @@
           <span class="meta-chip">最近 {{ correlationStore.tradingDays }} 个交易日</span>
           <span class="meta-chip">{{ correlationStore.period }} 分钟线</span>
           <span v-if="correlationStore.returnsCount > 0" class="meta-chip">样本点 {{ correlationStore.returnsCount }}</span>
+          <span v-if="correlationStore.failedStocks?.length" class="meta-chip">失败 {{ correlationStore.failedStocks.length }} 只</span>
         </div>
         <p v-if="correlationStore.timeRange" class="date-list">
           {{ correlationStore.timeRange.start_date }} 至 {{ correlationStore.timeRange.end_date }}
@@ -50,6 +73,10 @@
       </div>
 
       <p v-if="correlationStore.error" class="error-text">{{ correlationStore.error }}</p>
+      <p v-if="correlationStore.failedStocks?.length" class="panel-note">
+        未成功获取数据：
+        {{ correlationStore.failedStocks.map((item) => `${item.name}(${item.symbol})`).join('、') }}
+      </p>
       <div v-else-if="correlationStore.loading" class="empty-hint">正在拉取分钟数据并生成相关性热力图，可能需要 1 到 3 分钟，请稍候...</div>
       <div v-else-if="correlationStore.expanded && correlationStore.hasData" class="analysis-stack">
         <div class="method-switcher">
@@ -150,14 +177,19 @@ interface Props {
   title?: string
   description?: string
   editable?: boolean
+  stockText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   presetStocks: () => [],
   title: '相关性分析面板',
   description: '',
-  editable: false
+  editable: false,
+  stockText: ''
 })
+const emit = defineEmits<{
+  'update:stockText': [value: string]
+}>()
 
 const METHOD_LABELS: Record<CorrelationMethod, string> = {
   pearson: 'Pearson',
@@ -166,12 +198,23 @@ const METHOD_LABELS: Record<CorrelationMethod, string> = {
 }
 
 const correlationStore = useCorrelationStore()
-const manualStockText = ref('')
+const internalStockText = ref(props.stockText)
 const heatmapViewMode = ref<'correlation' | 'significance'>('correlation')
 const fullscreenOpen = ref(false)
 const fullscreenScale = ref(1)
 
 const methodLabels = METHOD_LABELS
+
+const stockTextModel = computed({
+  get: () => (props.editable ? props.stockText : internalStockText.value),
+  set: (value: string) => {
+    if (props.editable) {
+      emit('update:stockText', value)
+      return
+    }
+    internalStockText.value = value
+  }
+})
 
 const parsedManualStocks = computed<CorrelationStockInput[]>(() => {
   if (!props.editable) {
@@ -179,7 +222,7 @@ const parsedManualStocks = computed<CorrelationStockInput[]>(() => {
   }
 
   const uniqueStocks = new Map<string, CorrelationStockInput>()
-  const lines = manualStockText.value
+  const lines = stockTextModel.value
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -206,11 +249,11 @@ const parsedManualStocks = computed<CorrelationStockInput[]>(() => {
 })
 
 const parseError = computed(() => {
-  if (!props.editable || !manualStockText.value.trim()) {
+  if (!props.editable || !stockTextModel.value.trim()) {
     return ''
   }
 
-  const rawLines = manualStockText.value
+  const rawLines = stockTextModel.value
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -354,7 +397,14 @@ watch(
   { deep: true }
 )
 
-watch(manualStockText, () => {
+watch(
+  () => props.stockText,
+  (value) => {
+    internalStockText.value = value
+  }
+)
+
+watch(stockTextModel, () => {
   if (props.editable) {
     correlationStore.reset()
     heatmapViewMode.value = 'correlation'
@@ -362,6 +412,18 @@ watch(manualStockText, () => {
     fullscreenScale.value = 1
   }
 })
+
+watch(
+  () => [correlationStore.tradingDays, correlationStore.period],
+  () => {
+    if (props.editable) {
+      correlationStore.reset()
+      heatmapViewMode.value = 'correlation'
+      fullscreenOpen.value = false
+      fullscreenScale.value = 1
+    }
+  }
+)
 </script>
 
 <style scoped>
@@ -404,19 +466,35 @@ watch(manualStockText, () => {
   gap: 12px;
 }
 
+.parameter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .field-label {
   font-size: 13px;
 }
 
+.field-input,
 .field-textarea {
-  min-height: 112px;
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  resize: vertical;
   background: #fff;
   font: inherit;
+}
+
+.field-textarea {
+  min-height: 112px;
+  resize: vertical;
 }
 
 .action-row,
@@ -527,9 +605,11 @@ watch(manualStockText, () => {
 }
 
 @media (max-width: 900px) {
+  .parameter-grid,
   .panel-header,
   .chart-header,
   .correlation-meta {
+    display: flex;
     flex-direction: column;
   }
 

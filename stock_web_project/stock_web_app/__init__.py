@@ -3,6 +3,7 @@ def create_app(config_overrides=None):
 
     from .alerts_store import CsvAlertStore
     from .config import Config
+    from .correlation_store import CsvCorrelationPresetStore
     from .discipline_store import CsvLessonStore, CsvRuleStore
     from .routes import web_bp
     from .services import StockCorrelationAnalyzer, configure_matplotlib
@@ -30,5 +31,6 @@ def create_app(config_overrides=None):
     app.config["ALERT_STORE"] = CsvAlertStore(app.config["ALERTS_FILE"])
     app.config["RULE_STORE"] = CsvRuleStore(app.config["TRADING_RULES_FILE"])
     app.config["LESSON_STORE"] = CsvLessonStore(app.config["TRADING_LESSONS_FILE"])
+    app.config["CORRELATION_PRESET_STORE"] = CsvCorrelationPresetStore(app.config["CORRELATION_PRESETS_FILE"])
     app.register_blueprint(web_bp)
     return app

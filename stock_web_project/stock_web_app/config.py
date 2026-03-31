@@ -51,3 +51,7 @@ class Config:
         "TRADING_LESSONS_FILE",
         str(Path(__file__).resolve().parents[1] / "data" / "trading_lessons.csv"),
     )
+    CORRELATION_PRESETS_FILE = os.getenv(
+        "CORRELATION_PRESETS_FILE",
+        str(Path(__file__).resolve().parents[1] / "data" / "correlation_presets.csv"),
+    )

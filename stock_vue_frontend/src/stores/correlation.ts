@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import axios from 'axios'
 
 import { getCorrelationMatrix } from '@/services/modules/correlation'
 import type {
@@ -21,6 +22,7 @@ export const useCorrelationStore = defineStore('correlation', () => {
   const targetStocks = ref<Array<{ symbol: string; name: string }>>([])
   const timeRange = ref<{ start_date: string; end_date: string } | null>(null)
   const returnsCount = ref(0)
+  const failedStocks = ref<MultiStockCorrelationResponse['failed_stocks']>([])
   const correlationResults = ref<MultiStockCorrelationResponse['correlation_results']>({})
   const significanceResult = ref<MultiStockCorrelationResponse['significance_result']>(null)
 
@@ -57,6 +59,7 @@ export const useCorrelationStore = defineStore('correlation', () => {
     targetStocks.value = []
     timeRange.value = null
     returnsCount.value = 0
+    failedStocks.value = []
     correlationResults.value = {}
     significanceResult.value = null
   }
@@ -98,6 +101,7 @@ export const useCorrelationStore = defineStore('correlation', () => {
       targetStocks.value = payload.target_stocks ?? []
       timeRange.value = payload.time_range
       returnsCount.value = payload.returns_count ?? 0
+      failedStocks.value = payload.failed_stocks ?? []
       lastRequestKey.value = requestKey
 
       const preferredMethod = METHOD_ORDER.find((method) => payload.correlation_results?.[method])
@@ -107,7 +111,13 @@ export const useCorrelationStore = defineStore('correlation', () => {
 
       return true
     } catch (err) {
-      const message = err instanceof Error ? err.message : '相关性分析失败，请稍后重试'
+      let message = err instanceof Error ? err.message : '相关性分析失败，请稍后重试'
+      if (axios.isAxiosError(err)) {
+        message = err.response?.data?.error || err.message || message
+        failedStocks.value = err.response?.data?.failed_stocks ?? []
+      } else {
+        failedStocks.value = []
+      }
       error.value = message
       correlationResults.value = {}
       significanceResult.value = null
@@ -131,6 +141,7 @@ export const useCorrelationStore = defineStore('correlation', () => {
     targetStocks,
     timeRange,
     returnsCount,
+    failedStocks,
     correlationResults,
     significanceResult,
     availableMethods,

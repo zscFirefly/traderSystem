@@ -34,6 +34,10 @@ def _get_lesson_store():
     return current_app.config.get("LESSON_STORE")
 
 
+def _get_correlation_preset_store():
+    return current_app.config.get("CORRELATION_PRESET_STORE")
+
+
 def _get_analyzer_error():
     error = current_app.config.get("ANALYZER_INIT_ERROR")
     if error:
@@ -365,6 +369,54 @@ def discipline_lesson_detail(lesson_id):
         payload = request.get_json(silent=True) or {}
         operator = payload.get("updated_by", "").strip() or payload.get("created_by", "").strip() or "system"
         deleted = lesson_store.delete_lesson(lesson_id, operator=operator)
+        return jsonify({"success": True, "item": deleted})
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 400
+
+
+@web_bp.route("/api/correlation/presets", methods=["GET", "POST"])
+def correlation_presets():
+    preset_store = _get_correlation_preset_store()
+    if not preset_store:
+        return jsonify({"success": False, "error": "相关性方案存储未初始化"}), 500
+
+    if request.method == "GET":
+        try:
+            limit = request.args.get("limit", "").strip()
+            limit_value = int(limit) if limit else None
+            results = preset_store.list_presets(limit_value)
+            return jsonify({"success": True, "total": len(results), "results": results})
+        except Exception as exc:
+            return jsonify({"success": False, "error": str(exc)}), 400
+
+    try:
+        payload = request.get_json() or {}
+        created = preset_store.create_preset(payload)
+        return jsonify({"success": True, "item": created}), 201
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 400
+
+
+@web_bp.route("/api/correlation/presets/<preset_id>", methods=["PUT", "DELETE"])
+def correlation_preset_detail(preset_id):
+    preset_store = _get_correlation_preset_store()
+    if not preset_store:
+        return jsonify({"success": False, "error": "相关性方案存储未初始化"}), 500
+
+    if request.method == "PUT":
+        try:
+            payload = request.get_json() or {}
+            updated = preset_store.update_preset(preset_id, payload)
+            return jsonify({"success": True, "item": updated})
+        except Exception as exc:
+            return jsonify({"success": False, "error": str(exc)}), 400
+
+    try:
+        payload = request.get_json(silent=True) or {}
+        deleted = preset_store.delete_preset(
+            preset_id,
+            payload.get("updated_by", "system"),
+        )
         return jsonify({"success": True, "item": deleted})
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)}), 400
